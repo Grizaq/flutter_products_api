@@ -43,6 +43,7 @@ class Product {
   String shippingInformation;
   List<Review> reviews;
   List<String> images;
+  String thumbnail;
 
   Product({
     required this.id,
@@ -55,6 +56,7 @@ class Product {
     required this.shippingInformation,
     required this.reviews,
     required this.images,
+    required this.thumbnail,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
@@ -68,6 +70,7 @@ class Product {
     shippingInformation: json["shippingInformation"],
     reviews: List<Review>.from(json["reviews"].map((x) => Review.fromJson(x))),
     images: List<String>.from(json["images"].map((x) => x)),
+    thumbnail: json["thumbnail"],
   );
 
   Map<String, dynamic> toJson() => {

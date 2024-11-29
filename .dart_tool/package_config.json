@@ -68,6 +68,12 @@
       "languageVersion": "2.14"
     },
     {
+      "name": "flutter_staggered_grid_view",
+      "rootUri": "file:///C:/Users/tsint/AppData/Local/Pub/Cache/hosted/pub.dev/flutter_staggered_grid_view-0.7.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "flutter_test",
       "rootUri": "file:///C:/Users/tsint/flutter/packages/flutter_test",
       "packageUri": "lib/",
@@ -206,7 +212,7 @@
       "languageVersion": "3.6"
     }
   ],
-  "generated": "2024-11-28T22:55:31.548019Z",
+  "generated": "2024-11-29T16:23:42.139713Z",
   "generator": "pub",
   "generatorVersion": "3.7.0-188.0.dev",
   "flutterRoot": "file:///C:/Users/tsint/flutter",

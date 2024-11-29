@@ -1,7 +1,7 @@
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_products_api/models/products.dart';
 import 'package:flutter_products_api/services/remote/remote_service.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 import 'details_screen.dart';
 
@@ -20,9 +20,11 @@ class _MainPageState extends State<MainPage> {
 
   // Store the expansion state for each card
   List<bool> _expandedStates = [];
-  List<int> _currentPageIndex = [];  // Track the current page index for each card
 
   late Products? products = Products(products: [], total: 0, skip: 0, limit: 0);
+  List<Product> filteredProducts = [];
+  List<String> categories = [];
+  String selectedCategory = 'All';
   var isLoaded = false;
 
   @override
@@ -31,8 +33,7 @@ class _MainPageState extends State<MainPage> {
     getData();
     _scrollController.addListener(() {
       setState(() {
-        _showBackToTopButton = _scrollController.offset >
-            300; // Show button if scrolled past 300px
+        _showBackToTopButton = _scrollController.offset > 300;
       });
     });
   }
@@ -42,9 +43,10 @@ class _MainPageState extends State<MainPage> {
       products = await RemoteService().getProducts();
       if (products != null) {
         setState(() {
-          // Initialize _expandedStates and _currentPageIndex
+          categories = ['All', ...{...products!.products.map((e) => e.category.toString().split('.').last)}];
+          filteredProducts = products!.products;
+
           _expandedStates = List.generate(products!.products.length, (_) => false);
-          _currentPageIndex = List.generate(products!.products.length, (_) => 0);  // Set initial index to 0
           isLoaded = true;
         });
       } else {
@@ -59,144 +61,174 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  void filterProducts(String category) {
+    setState(() {
+      selectedCategory = category;
+      if (category == 'All') {
+        filteredProducts = products!.products;
+      } else {
+        filteredProducts = products!.products
+            .where((product) => product.category.toString().split('.').last == category)
+            .toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    int crossAxisCount = (screenWidth ~/ 400).clamp(1, 3);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Flutter example"),
+        title: const Text("Flutter Example"),
       ),
       body: isLoaded
           ? (products!.products.isEmpty
           ? const Center(child: Text("No products available"))
           : Stack(
         children: [
-          ListView.builder(
+          SingleChildScrollView(
             controller: _scrollController,
-            padding: const EdgeInsets.all(8.0),
-            itemCount: products!.products.length,
-            itemBuilder: (context, index) {
-              final product = products?.products[index];
-
-              if (product == null) {
-                return const SizedBox.shrink();
-              }
-
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _expandedStates[index] =
-                    !_expandedStates[index];
-                  });
-                },
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16.0),
-                  ),
-                  elevation: 4,
-                  margin: const EdgeInsets.symmetric(
-                      vertical: 10.0, horizontal: 15.0),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Stack(
-                          children: [
-                            CarouselSlider(
-                              items: product?.images.map((imageUrl) {
-                                return Image.network(imageUrl,
-                                    fit: BoxFit.cover);
-                              }).toList(),
-                              options: CarouselOptions(
-                                height: 150.0,
-                                enlargeCenterPage: true,
-                                enableInfiniteScroll: true,
-                                viewportFraction: 1.0,
-                                onPageChanged: (index, reason) {
-                                  setState(() {
-                                    _currentPageIndex[products!.products.indexOf(product)] = index;
-                                  });
-                                },
+            child: Column(
+              children: [
+                // Category filter
+                Container(
+                  height: 60,
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: categories.length,
+                    itemBuilder: (context, index) {
+                      final category = categories[index];
+                      return GestureDetector(
+                        onTap: () => filterProducts(category),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                          decoration: BoxDecoration(
+                            color: selectedCategory == category ? Colors.blue : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(20.0),
+                          ),
+                          child: Center(
+                            child: Text(
+                              category,
+                              style: TextStyle(
+                                color: selectedCategory == category ? Colors.white : Colors.black,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Positioned(
-                              bottom: 8,
-                              left: 0,
-                              right: 0,
-                              child: Row(
-                                mainAxisAlignment:
-                                MainAxisAlignment.center,
-                                children: List.generate(
-                                  product?.images.length ?? 0,
-                                      (pageIndex) {
-                                    return Container(
-                                      width: 8.0,
-                                      height: 8.0,
-                                      margin: const EdgeInsets
-                                          .symmetric(horizontal: 4.0),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: pageIndex ==
-                                            _currentPageIndex[products!.products.indexOf(product)]
-                                            ? Colors.white
-                                            : Colors.grey,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8.0),
-                        Center(
-                          child: Text(
-                            product?.title ?? 'No title',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18.0,
-                            ),
-                            maxLines: _expandedStates[index] ? 3 : 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(height: 4.0),
-                        Center(
-                          child: Text(
-                            product?.description ?? 'No description',
-                            style: const TextStyle(fontSize: 14.0),
-                            maxLines: _expandedStates[index] ? 15 : 2,
-                            overflow: TextOverflow.ellipsis,
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(height: 8.0),
-                        if (_expandedStates[index])
-                          Align(
-                            alignment: Alignment.center,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        ProductDetailsScreen(
-                                          product: products!
-                                              .products[index],
-                                        ),
-                                  ),
-                                );
-                              },
-                              child: const Text('Go to details'),
-                            ),
-                          ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
-              );
-            },
+                // Product grid
+                MasonryGridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(8.0),
+                  gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                  ),
+                  itemCount: filteredProducts.length,
+                  itemBuilder: (context, index) {
+                    final product = filteredProducts[index];
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _expandedStates[index] = !_expandedStates[index];
+                        });
+                      },
+                      child: Padding(  // Add padding around each card to create space
+                        padding: const EdgeInsets.all(8.0), // You can adjust this value for desired spacing
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.0),
+                          ),
+                          elevation: 4,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Thumbnail
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  child: Image.network(
+                                    product.thumbnail,
+                                    height: 200,
+                                    width: double.infinity,
+                                    fit: BoxFit.fitHeight,
+                                  ),
+                                ),
+                                const SizedBox(height: 8.0),
+                                // Title
+                                Text(
+                                  product.title,
+                                  style: const TextStyle(
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                                const SizedBox(height: 4.0),
+                                // Price and Rating
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      '\$${product.price.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${product.rating} ⭐',
+                                      style: const TextStyle(color: Colors.grey),
+                                    ),
+                                  ],
+                                ),
+                                if (_expandedStates[index]) ...[
+                                  const SizedBox(height: 8.0),
+                                  // Description
+                                  Text(
+                                    product.description,
+                                    style: const TextStyle(fontSize: 14.0),
+                                  ),
+                                  const SizedBox(height: 8.0),
+                                  // Go to Details Button
+                                  Center(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ProductDetailsScreen(
+                                              product: product,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: const Text('Go to details'),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
+          // Back to Top Button
           if (_showBackToTopButton)
             Positioned(
               bottom: 16,
