@@ -53,3 +53,5 @@ Web View:
 ![](screen_web_main_page_list_grid_3_columns_flex.png)
 
 ![](screen_web_details_page.png)
+
+![](screen_web_main_page_list_grid_3_columns_flex_sorted.png)
