@@ -1,0 +1,36 @@
+# Flutter/Dart/Pub related files
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Obfuscated and compiled files
+*.class
+*.lock
+*.log
+*.bin
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Flutter specific
+flutter_export_environment.sh
+flutter_export_environment.bat
+
+# Generated asset files
+AssetManifest.json
+FontManifest.json
+NOTICES
+*.g.dart
+
+# IntelliJ related
+.idea/
+
+# VS Code related
+.vscode/
+
+# macOS/Windows/Linux specific
+*.DS_Store
+*.iml
